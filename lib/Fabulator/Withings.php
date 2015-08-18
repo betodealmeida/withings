@@ -19,18 +19,43 @@ class Withings
     }
 
     /**
+     * Parse header
+     * @param  array  $headers
+     * @return [type]          [description]
+     */
+    private function parseHeaders(array $headers)
+    {
+        $output = array();
+
+        if ('HTTP' === substr($headers[0], 0, 4)) {
+            list(, $output['status'], $output['status_text']) = explode(' ', $headers[0]);
+            unset($headers[0]);
+        }
+
+        foreach ($headers as $v) {
+            $h = preg_split('/:\s*/', $v);
+            @$output[strtolower($h[0])] = $h[1];
+        }
+
+        return $output;
+    }
+
+    /**
      * Request session key from Withings
      * @return string
      */
     public function getSessionKey()
     {
+
+        $loginUrl = 'https://account.withings.com/connectionuser/account_login?appname=my2&appliver=8b90cb73&r=https%3A%2F%2Fhealthmate.withings.com%2F';
+
         $fields = [
             'email' => $this->email,
             'password' => $this->password
         ];
 
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_URL, $loginUrl);
         curl_setopt($ch, CURLOPT_POST, count($fields));
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -65,12 +90,12 @@ class Withings
     {
         $params = [
             'action' => 'getmeashf',
-            'startdate' => $end->getTimestamp(),
+            'startdate' => $start->getTimestamp(),
             'enddate' => $end->getTimestamp(),
             'meastype' => '12,35',
             'deviceid' => $deviceId
         ];
-        return requestAPI('measure', $params);
+        return $this->requestAPI('measure', $params);
     }
 
     /**
@@ -84,7 +109,7 @@ class Withings
         $client = new Client();
 
         $defaultParams = [
-            'sessionid' => $this->session,
+            'sessionid' => $this->sessionKey,
             'appname' => 'my2',
             'appliver' => '8b90cb73',
             'apppfm' => 'web'
@@ -95,7 +120,7 @@ class Withings
         $request = $client->post(
             'https://healthmate.withings.com/index/service/v2/' . $service,
             [
-            'body' => $params
+            'body' => $params,
             ]
         );
 
