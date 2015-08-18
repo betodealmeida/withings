@@ -1,0 +1,14 @@
+{
+  "name": "fabulator/Withings",
+  "description": "Withings neoficial API library",
+	"repositories": [{
+		"type": "vcs"
+	}],
+	"require": {
+		"PHP" : ">=5.4",
+		"guzzlehttp/guzzle": "~5.0"
+	},
+	"autoload": {
+		"psr-0": { "Fabulator": "lib/" }
+	}
+}
