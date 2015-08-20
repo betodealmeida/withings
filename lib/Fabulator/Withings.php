@@ -60,7 +60,10 @@ class Withings
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($fields));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_HEADER, 1);
-        $result = curl_exec($ch);
+
+        if (!($result = curl_exec($ch))) {
+            throw new \Exception('Curl error: ' . curl_error($ch));
+        }
         $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
         $header = substr($result, 0, $header_size);
         $headerArray = ($this->parseHeaders(explode("\n", $header)));
@@ -95,7 +98,21 @@ class Withings
             'meastype' => '12,35',
             'deviceid' => $deviceId
         ];
-        return $this->requestAPI('measure', $params);
+        return $this->requestAPI('v2/measure', $params);
+    }
+
+    /**
+     * Get info about device
+     * @param  integer $deviceId
+     * @return object
+     */
+    public function getDeviceInfo($deviceId)
+    {
+        $params = [
+            'deviceid' => $deviceId,
+            'action' => 'getproperties'
+        ];
+        return $this->requestAPI('device', $params);
     }
 
     /**
@@ -104,7 +121,7 @@ class Withings
      * @param  array $params
      * @return object
      */
-    public function requestAPI($service, $params)
+    public function requestAPI($service, $params = [])
     {
         $client = new Client();
 
@@ -118,7 +135,7 @@ class Withings
         $params = array_merge($defaultParams, $params);
 
         $request = $client->post(
-            'https://healthmate.withings.com/index/service/v2/' . $service,
+            'https://healthmate.withings.com/index/service/' . $service,
             [
             'body' => $params,
             ]
